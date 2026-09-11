@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tebak Angka Sederhana</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        .main-container { background: #1e1e1e; padding: 20px; border-radius: 8px; display: flex; gap: 25px; max-width: 900px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.6); align-items: center; }
+        .chessboard { display: grid; grid-template-columns: repeat(10, 1fr); width: 100%; max-width: 450px; aspect-ratio: 1; border: 3px solid #fff; flex-shrink: 0; }
+        .cell { display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; user-select: none; }
+        .cell.white { background: #fff; color: #000; }
+        .cell.black { background: #000; color: #fff; }
+        .cell span.hidden-text { opacity: 0; visibility: hidden; }
+        .side-panel { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .side-panel p { font-size: 1.2rem; margin-bottom: 25px; color: #e0e0e0; }
+        .btn-container { display: flex; gap: 15px; width: 100%; justify-content: center; }
+        .btn { padding: 14px 28px; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-start, .btn-primary { background: #2196F3; color: #fff; }
+        .btn-no { background: #f44336; color: #fff; flex: 1; }
+        .btn-yes { background: #4CAF50; color: #fff; flex: 1; }
+        .result-box { font-size: 4rem; font-weight: bold; color: #4CAF50; margin: 20px 0; word-break: break-word; }
+        .hidden { display: none !important; }
+        @media (max-width: 650px) { .main-container { flex-direction: column; } .chessboard { max-width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div id="chessboard" class="chessboard"></div>
+        <div class="side-panel">
+            <div id="slide-1">
+                <p>Pilih dan simpan satu angka antara 1 sampai 100 di dalam pikiran Anda!</p>
+                <button class="btn btn-start" onclick="startGame()">Mulai</button>
+            </div>
+            <div id="slide-game" class="hidden">
+                <p>Apakah angka yang anda pilih ada di papan tersebut?</p>
+                <div class="btn-container">
+                    <button class="btn btn-no" onclick="answer(false)">TIDAK</button>
+                    <button class="btn btn-yes" onclick="answer(true)">YA</button>
+                </div>
+            </div>
+            <div id="slide-final" class="hidden">
+                <div id="answer-container" class="hidden">
+                    <div id="result-number" class="result-box">0</div>
+                </div>
+                <div class="btn-container" style="flex-direction: column;">
+                    <button id="btn-reveal" class="btn btn-primary" onclick="revealAnswer()">Lihat Jawaban</button>
+                    <button class="btn btn-start" onclick="resetGame()">Main Lagi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentSlide = 0, historySum = 0;
+        const board = document.getElementById('chessboard');
+        function initBoard() {
+            board.innerHTML = '';
+            for (let i = 1; i <= 100; i++) {
+                const isWhite = (Math.floor((i - 1) / 10) + ((i - 1) % 10)) % 2 === 0;
+                board.innerHTML += `<div class="cell ${isWhite ? 'white' : 'black'}"><span id="text-${i}">${i}</span></div>`;
+            }
+        }
+        function startGame() {
+            currentSlide = historySum = 0;
+            toggleSlide('slide-1', 'slide-game');
+            showStep();
+        }
+        function showStep() {
+            const bit = 1 << currentSlide;
+            for (let i = 1; i <= 100; i++) {
+                const isPresent = (i & bit) !== 0;
+                document.getElementById(`text-${i}`).classList.toggle('hidden-text', !isPresent);
+            }
+        }
+        function answer(isYes) {
+            if (isYes) historySum += (1 << currentSlide);
+            currentSlide++;
+            if (currentSlide < 7) {
+                showStep();
+            } else {
+                for (let i = 1; i <= 100; i++) document.getElementById(`text-${i}`).classList.add('hidden-text');
+                toggleSlide('slide-game', 'slide-final');
+                document.getElementById('answer-container').classList.add('hidden');
+                document.getElementById('btn-reveal').classList.remove('hidden');
+            }
+        }
+        function revealAnswer() {
+            const resultElement = document.getElementById('result-number');
+            
+            // Validasi jika hasil melebihi 100 atau sama dengan 0
+            if (historySum > 100 || historySum === 0) {
+                resultElement.innerText = "Error: Jawaban Anda tidak konsisten!";
+                resultElement.style.fontSize = "1.5rem";
+                resultElement.style.color = "#f44336";
+            } else {
+                resultElement.innerText = historySum;
+                resultElement.style.fontSize = "4rem";
+                resultElement.style.color = "#4CAF50";
+            }
+
+            document.getElementById('answer-container').classList.remove('hidden');
+            document.getElementById('btn-reveal').classList.add('hidden');
+        }
+        function resetGame() {
+            toggleSlide('slide-final', 'slide-1');
+            initBoard();
+        }
+        function toggleSlide(hideId, showId) {
+            document.getElementById(hideId).classList.add('hidden');
+            document.getElementById(showId).classList.remove('hidden');
+        }
+        initBoard();
+    </script>
+</body>
+</html>
